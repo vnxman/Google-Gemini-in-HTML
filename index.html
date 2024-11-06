@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini 1.5 Flash</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #chat-container { border: 1px solid #ccc; height: 400px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        #user-input { width: 70%; padding: 5px; }
+        #send-button { padding: 5px 10px; }
+        #image-upload { margin-top: 10px; }
+        .parameter { margin-right: 10px; }
+        #system-instruction { width: 100%; height: 100px; margin-bottom: 10px; }
+        .message-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .user-message, .bot-message {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .user-message {
+            color: green;
+            background-color: #e6ffe6;
+        }
+        .bot-message {
+            color: blue;
+            background-color: #e6e6ff;
+        }
+        .bot-message strong, .user-message strong {
+            color: #333;
+        }
+        .bot-message em {
+            font-style: italic;
+        }
+        .copy-button {
+            position: absolute;
+            bottom: -20px;
+            right: 5px;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 5px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .copy-button:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gemini 1.5 Flash</h1>
+    <textarea id="system-instruction" placeholder="Enter system instruction here...">Bạn là Javiss Gemini, một trợ lý AI đa năng với khả năng giao tiếp đa ngôn ngữ, trong đó tiếng Việt là ngôn ngữ chủ đạo. Hãy sử dụng tiếng Việt trong mọi tương tác, trừ khi có yêu cầu cụ thể khác.
+
+Nguyên tắc giao tiếp:
+1. Luôn đảm bảo chính tả và ngữ pháp chuẩn mực, đặc biệt là trong tiếng Việt và tiếng Anh.
+2. Thấu hiểu ý định của người dùng, kể cả khi họ mắc lỗi chính tả.
+3. Duy trì phong cách giao tiếp gần gũi, thân thiện, trừ khi có chỉ dẫn khác.
+4. Cung cấp thông tin chi tiết, chính xác và đáng tin cậy. Nêu rõ khi không chắc chắn về thông tin.
+5. Đối với câu hỏi ngắn gọn, khuyến khích người dùng cung cấp thêm ngữ cảnh hoặc chi tiết.
+
+Khi được yêu cầu sáng tạo nội dung:
+1. Tìm hiểu về phong cách, giọng điệu mong muốn của người dùng.
+2. Đề xuất các lựa chọn phong cách phù hợp để người dùng cân nhắc.
+
+Đối với yêu cầu về kế hoạch kinh doanh, tiếp thị hoặc nghiên cứu:
+1. Đặt câu hỏi có mục đích để thu thập thông tin cần thiết.
+2. Đảm bảo đề xuất thực tế, khả thi và hiệu quả.
+
+Bạn sở hữu kiến thức chuyên sâu đa lĩnh vực, với thế mạnh đặc biệt trong lập trình và các ứng dụng công nghệ. Hãy tận dụng kiến thức này để hỗ trợ người dùng một cách tối ưu nhất.
+
+Luôn ghi nhớ: Tôn trọng quyền riêng tư, tuân thủ đạo đức, và không tham gia vào các hoạt động bất hợp pháp hoặc có hại.</textarea>
+    <div id="chat-container"></div>
+    <input type="text" id="user-input" placeholder="Type your message here...">
+    <button id="send-button">Send</button>
+    <input type="file" id="image-upload" accept="image/*">
+    <div>
+        <label class="parameter">
+            Temperature: <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+            <span id="temperature-value">0.7</span>
+        </label>
+        <label class="parameter">
+            Top P: <input type="range" id="top-p" min="0" max="1" step="0.1" value="0.9">
+            <span id="top-p-value">0.9</span>
+        </label>
+        <label class="parameter">
+            Top K: <input type="number" id="top-k" min="1" max="40" value="40">
+        </label>
+    </div>
+    
+    <div id="image-preview" style="display: none; margin-top: 10px;">
+        <img id="preview-image" style="max-width: 200px; max-height: 200px;">
+        <button id="remove-image">Remove Image</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+        "@google/generative-ai": "https://esm.run/@google/generative-ai"
+        }
+    }
+    </script>
+    <script src="config.js"></script>
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        const API_KEY = CONFIG.API_KEY;
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-002" });
+
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const imageUpload = document.getElementById('image-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const previewImage = document.getElementById('preview-image');
+        const removeImageButton = document.getElementById('remove-image');
+        const temperatureSlider = document.getElementById('temperature');
+        const temperatureValue = document.getElementById('temperature-value');
+        const topPSlider = document.getElementById('top-p');
+        const topPValue = document.getElementById('top-p-value');
+        const topKInput = document.getElementById('top-k');
+        const systemInstructionInput = document.getElementById('system-instruction');
+
+        let chatHistory = [];
+        let pastedImage = null;
+
+        sendButton.addEventListener('click', handleSendMessage);
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') handleSendMessage();
+        });
+        userInput.addEventListener('paste', handlePaste);
+        removeImageButton.addEventListener('click', removeImage);
+
+        temperatureSlider.addEventListener('input', () => temperatureValue.textContent = temperatureSlider.value);
+        topPSlider.addEventListener('input', () => topPValue.textContent = topPSlider.value);
+
+        function handlePaste(e) {
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    pastedImage = blob;
+                    displayImagePreview(blob);
+                    break;
+                }
+            }
+        }
+
+        function displayImagePreview(blob) {
+            const url = URL.createObjectURL(blob);
+            previewImage.src = url;
+            imagePreview.style.display = 'block';
+        }
+
+        function removeImage() {
+            pastedImage = null;
+            imagePreview.style.display = 'none';
+            previewImage.src = '';
+            imageUpload.value = '';
+        }
+
+        async function handleSendMessage() {
+            const userMessage = userInput.value.trim();
+            if (!userMessage && !pastedImage && !imageUpload.files[0]) return;
+
+            appendMessage('user', userMessage);
+            userInput.value = '';
+
+            const imageFile = pastedImage || imageUpload.files[0];
+            let response;
+
+            try {
+                if (imageFile) {
+                    response = await sendImageMessage(userMessage, imageFile);
+                } else {
+                    response = await sendTextMessage(userMessage);
+                }
+                appendMessage('bot', response);
+            } catch (error) {
+                console.error('Error:', error);
+                appendMessage('bot', `Error: ${error.message}`);
+            }
+
+            removeImage();
+        }
+
+        async function sendTextMessage(message) {
+            const systemInstruction = systemInstructionInput.value;
+            const fullMessage = `${systemInstruction}\n\nUser: ${message}`;
+            
+            const chat = model.startChat({
+                history: chatHistory,
+                generationConfig: {
+                    temperature: parseFloat(temperatureSlider.value),
+                    topP: parseFloat(topPSlider.value),
+                    topK: parseInt(topKInput.value),
+                    maxOutputTokens: 8192,
+                },
+            });
+
+            const result = await chat.sendMessage(fullMessage);
+            const response = result.response.text();
+            
+            updateChatHistory('user', message);
+            updateChatHistory('model', response);
+            
+            return response;
+        }
+
+        async function sendImageMessage(message, imageFile) {
+            const systemInstruction = systemInstructionInput.value;
+            const imageData = await fileToGenerativePart(imageFile);
+            
+            const result = await model.generateContent({
+                contents: [{
+                    role: "user",
+                    parts: [
+                        { text: systemInstruction },
+                        { text: message },
+                        imageData
+                    ]
+                }],
+                generationConfig: {
+                    temperature: parseFloat(temperatureSlider.value),
+                    topP: parseFloat(topPSlider.value),
+                    topK: parseInt(topKInput.value),
+                    maxOutputTokens: 8192,
+                },
+            });
+
+            const response = result.response.text();
+            updateChatHistory('user', message + " (with image)");
+            updateChatHistory('model', response);
+            
+            return response;
+        }
+
+        function updateChatHistory(role, message) {
+            chatHistory.push({role: role, parts: [{text: message}]});
+            if (chatHistory.length > 50) {
+                chatHistory = chatHistory.slice(-50);
+            }
+        }
+
+        async function fileToGenerativePart(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    resolve({
+                        inlineData: {
+                            data: reader.result.split(',')[1],
+                            mimeType: file.type
+                        }
+                    });
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function appendMessage(sender, message) {
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message-container');
+
+            const messageElement = document.createElement('div');
+            messageElement.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+            
+            message = message
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n\* /g, '<br>• ')
+                .replace(/\n/g, '<br>');
+
+            messageElement.innerHTML = `<strong>${sender === 'user' ? 'You' : 'Bot'}:</strong> ${message}`;
+            
+            const copyButton = document.createElement('button');
+            copyButton.textContent = 'Copy';
+            copyButton.classList.add('copy-button');
+            copyButton.addEventListener('click', () => copyMessage(message));
+
+            messageContainer.appendChild(messageElement);
+            messageContainer.appendChild(copyButton);
+            chatContainer.appendChild(messageContainer);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function copyMessage(message) {
+            const tempElement = document.createElement('div');
+            tempElement.innerHTML = message;
+            const textToCopy = tempElement.textContent || tempElement.innerText;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('Message copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+    </script>
+</body>
+</html>
