@@ -7,6 +7,6 @@ Tải file index.html và file config.js về máy tính. Dùng Notepad (hay b�
 Hiện tại Huân đang để trong mã nguồn là Gemeni 1.5 Flash. Bạn nào muốn dùng bản Pro thì tự mở file index.html rồi thay chữ "flash" thành chữ "pro" nhé.
 ![image](https://github.com/user-attachments/assets/415f7a8f-d08d-48dd-9c31-d3575eeaa257)
 
-Ai muốn nhắn tin chơi chơi thì Telegram Huân nha: @huank8895
+### Ai muốn nhắn tin chơi chơi thì Telegram Huân nha: @huank8895
 
 
