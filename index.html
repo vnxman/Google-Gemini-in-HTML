@@ -12,43 +12,14 @@
         #image-upload { margin-top: 10px; }
         .parameter { margin-right: 10px; }
         #system-instruction { width: 100%; height: 100px; margin-bottom: 10px; }
-        .message-container {
-            position: relative;
-            margin-bottom: 20px;
-        }
-        .user-message, .bot-message {
-            margin-bottom: 5px;
-            padding: 5px;
-            border-radius: 5px;
-        }
-        .user-message {
-            color: green;
-            background-color: #e6ffe6;
-        }
-        .bot-message {
-            color: blue;
-            background-color: #e6e6ff;
-        }
-        .bot-message strong, .user-message strong {
-            color: #333;
-        }
-        .bot-message em {
-            font-style: italic;
-        }
-        .copy-button {
-            position: absolute;
-            bottom: -20px;
-            right: 5px;
-            background-color: #f0f0f0;
-            border: none;
-            border-radius: 3px;
-            padding: 2px 5px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        .copy-button:hover {
-            background-color: #e0e0e0;
-        }
+        .message-container { position: relative; margin-bottom: 20px; }
+        .user-message, .bot-message { margin-bottom: 5px; padding: 5px; border-radius: 5px; }
+        .user-message { color: green; background-color: #e6ffe6; }
+        .bot-message { color: blue; background-color: #e6e6ff; }
+        .bot-message strong, .user-message strong { color: #333; }
+        .bot-message em { font-style: italic; }
+        .copy-button { position: absolute; bottom: -20px; right: 5px; background-color: #f0f0f0; border: none; border-radius: 3px; padding: 2px 5px; font-size: 12px; cursor: pointer; }
+        .copy-button:hover { background-color: #e0e0e0; }
     </style>
 </head>
 <body>
@@ -109,7 +80,7 @@ Luôn ghi nhớ: Tôn trọng quyền riêng tư, tuân thủ đạo đức, và
 
         const API_KEY = CONFIG.API_KEY;
         const genAI = new GoogleGenerativeAI(API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-002" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const chatContainer = document.getElementById('chat-container');
         const userInput = document.getElementById('user-input');
@@ -127,6 +98,25 @@ Luôn ghi nhớ: Tôn trọng quyền riêng tư, tuân thủ đạo đức, và
 
         let chatHistory = [];
         let pastedImage = null;
+
+        const SAFETY_SETTINGS = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_NONE"
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_NONE"
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_NONE"
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_NONE"
+            },
+        ];
 
         sendButton.addEventListener('click', handleSendMessage);
         userInput.addEventListener('keypress', function(e) {
@@ -192,7 +182,7 @@ Luôn ghi nhớ: Tôn trọng quyền riêng tư, tuân thủ đạo đức, và
             const systemInstruction = systemInstructionInput.value;
             const fullMessage = `${systemInstruction}\n\nUser: ${message}`;
             
-            const chat = model.startChat({
+            const chatConfig = {
                 history: chatHistory,
                 generationConfig: {
                     temperature: parseFloat(temperatureSlider.value),
@@ -200,29 +190,38 @@ Luôn ghi nhớ: Tôn trọng quyền riêng tư, tuân thủ đạo đức, và
                     topK: parseInt(topKInput.value),
                     maxOutputTokens: 8192,
                 },
-            });
+                safetySettings: SAFETY_SETTINGS
+            };
 
+            console.log("Sending text message with config:", chatConfig);
+
+            const chat = model.startChat(chatConfig);
             const result = await chat.sendMessage(fullMessage);
-            const response = result.response.text();
+            const response = result.response;
             
             updateChatHistory('user', message);
-            updateChatHistory('model', response);
+            updateChatHistory('model', response.text());
             
-            return response;
+            return response.text();
         }
 
         async function sendImageMessage(message, imageFile) {
             const systemInstruction = systemInstructionInput.value;
             const imageData = await fileToGenerativePart(imageFile);
             
-            const result = await model.generateContent({
+            const parts = [
+                { text: systemInstruction },
+                imageData
+            ];
+
+            if (message.trim()) {
+                parts.push({ text: message });
+            }
+
+            const contentConfig = {
                 contents: [{
                     role: "user",
-                    parts: [
-                        { text: systemInstruction },
-                        { text: message },
-                        imageData
-                    ]
+                    parts: parts
                 }],
                 generationConfig: {
                     temperature: parseFloat(temperatureSlider.value),
@@ -230,13 +229,17 @@ Luôn ghi nhớ: Tôn trọng quyền riêng tư, tuân thủ đạo đức, và
                     topK: parseInt(topKInput.value),
                     maxOutputTokens: 8192,
                 },
-            });
+                safetySettings: SAFETY_SETTINGS
+            };
 
-            const response = result.response.text();
-            updateChatHistory('user', message + " (with image)");
-            updateChatHistory('model', response);
+            console.log("Sending image message with config:", contentConfig);
+
+            const result = await model.generateContent(contentConfig);
+            const response = result.response;
+            updateChatHistory('user', message ? (message + " (with image)") : "(image only)");
+            updateChatHistory('model', response.text());
             
-            return response;
+            return response.text();
         }
 
         function updateChatHistory(role, message) {
