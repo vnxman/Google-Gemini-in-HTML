@@ -17,7 +17,7 @@ Tải file index.html và file config.js về máy tính. Dùng Notepad (hay b�
 4. Hiện tại Huân đang để trong mã nguồn là Gemeni 1.5 Flash. Bạn nào muốn dùng bản Pro thì tự mở file index.html rồi thay chữ "flash" thành chữ "pro" như ảnh dưới nhé:
 ![image](https://github.com/user-attachments/assets/415f7a8f-d08d-48dd-9c31-d3575eeaa257)
 
-5. Huân đã cài safety_settings cho mặc định là Block_none rồi nhá!!!
+### 5. Huân đã cài safety_settings cho mặc định là Block_none rồi nhá!!!
    ![image](https://github.com/user-attachments/assets/f3640598-028d-488c-98b9-b79c90998eb8)
 
 
