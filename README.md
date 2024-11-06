@@ -15,8 +15,11 @@ Tải file index.html và file config.js về máy tính. Dùng Notepad (hay b�
 2. Tự bạn có thể thay thế system instruction của bạn, hoặc dùng cái có sẵn Huân đang để.
 3. Chatbot có thể ghi nhớ 25 vòng hội thoại trong lần sử dụng. (Bạn mà nhấn Refresh (reload) trang thì coi như reset nhé).
 4. Hiện tại Huân đang để trong mã nguồn là Gemeni 1.5 Flash. Bạn nào muốn dùng bản Pro thì tự mở file index.html rồi thay chữ "flash" thành chữ "pro" như ảnh dưới nhé:
-
 ![image](https://github.com/user-attachments/assets/415f7a8f-d08d-48dd-9c31-d3575eeaa257)
+
+5. Huân đã cài safety_settings cho mặc định là Block_none rồi nhá!!!
+   ![image](https://github.com/user-attachments/assets/f3640598-028d-488c-98b9-b79c90998eb8)
+
 
 ### Ai muốn nhắn tin chơi chơi thì Telegram Huân nha: @huank8895
 
