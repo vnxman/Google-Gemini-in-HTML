@@ -21,6 +21,6 @@ Tải file index.html và file config.js về máy tính. Dùng Notepad (hay b�
    ![image](https://github.com/user-attachments/assets/f3640598-028d-488c-98b9-b79c90998eb8)
 
 
-### Ai muốn nhắn tin chơi chơi thì Telegram Huân nha: @huank8895
+
 
 
